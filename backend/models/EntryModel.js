@@ -47,7 +47,7 @@ const entrySchema = new mongoose.Schema({
 });
 
 // creating indexes 
-userSchema.index({userId: 1, createdAt: -1});
-userSchema.index({privacy: 1, createdAt: -1});
+entrySchema.index({userId: 1, createdAt: -1});
+entrySchema.index({privacy: 1, createdAt: -1});
 
 export default mongoose.model('Entry', entrySchema);
