@@ -5,6 +5,15 @@ import { createAccessToken } from '../utils/generateTokens.js';
 
 export const refreshAccessTokenController = async (req, res) => {
   try {
+    console.log('----- REFRESH TOKEN DEBUG -----');
+
+    console.log('REFRESH TOKEN RECEIVED:', req.body.refreshToken);
+
+    console.log(
+      'REFRESH SECRET FROM PROCESS.ENV:',
+      process.env.REFRESH_TOKEN_SECRET
+    );
+
     const { refreshToken } = req.body;
     if (!refreshToken) {
       return res.status(400).json({ message: 'Refresh token is required' });
@@ -27,16 +36,15 @@ export const refreshAccessTokenController = async (req, res) => {
     const payload = { userId: user._id, email: user.email };
     const newAccessToken = createAccessToken(payload);
 
-    return res.status(200).json({
+    res.status(200).json({
       message: 'Access token refreshed successfully',
       accessToken: newAccessToken,
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        message: 'Invalid or expired refresh token',
-        error: error.message,
-      });
+    // console.error(error);
+    res.status(500).json({
+      message: 'Invalid or expired refresh token',
+      error: error.message,
+    });
   }
 };

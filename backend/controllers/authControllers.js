@@ -62,6 +62,8 @@ const loginUserController = async (req, res) => {
     const accessToken = createAccessToken(payload);
     const refreshToken = createRefreshToken(payload);
 
+    // console.log('REFRESH TOKEN GENERATED AT LOGIN:', refreshToken);
+
     // hashing the refresh token before saving it to the database
     const SALT_ROUNDS = 10;
     user.refreshTokenHash = await bcrypt.hash(refreshToken, SALT_ROUNDS);
@@ -77,4 +79,39 @@ const loginUserController = async (req, res) => {
   }
 };
 
-export { registerUserController, loginUserController };
+const logoutUserController = async (req, res) => {
+  try {
+    const refreshToken = req.cookies?.refreshToken;
+
+    if (!refreshToken) {
+      return res.status(200).json({
+        message: 'logged out successfully (no token found)',
+      });
+    }
+
+    // check in db
+    const user = User.findOne({ refreshTokenHash: refreshToken });
+    if (user) {
+      user.refreshTokenHash = null;
+      await user.save();
+    }
+
+    // cookie clear
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: true,
+      samesite: 'None',
+    });
+
+    return res.status(200).json({
+      message: 'Logout successful',
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Logout failed',
+      error: error.message,
+    });
+  }
+};
+
+export { registerUserController, loginUserController, logoutUserController };
