@@ -81,6 +81,8 @@ const loginUserController = async (req, res) => {
 
 const logoutUserController = async (req, res) => {
   try {
+
+    // s1 getting token from cookie - frontend
     const refreshToken = req.cookies?.refreshToken;
 
     if (!refreshToken) {
@@ -89,18 +91,30 @@ const logoutUserController = async (req, res) => {
       });
     }
 
-    // check in db
-    const user = User.findOne({ refreshTokenHash: refreshToken });
-    if (user) {
-      user.refreshTokenHash = null;
-      await user.save();
+    //s2 - check in db for all non empty refresh token users
+    const user = User.find({ refreshTokenHash: { $ne: null } });
+
+    let matchedUser = null;
+    for (const u of user) {
+      // s3 - compare tokens to user in db
+      const match = await bcrypt.compare(refreshToken, u.refreshTokenHash);
+      if (match) {
+        matchedUser = u;
+        break;
+      }
     }
 
-    // cookie clear
+    // s4 - if found, remove refresh token from db
+    if (matchedUser) {
+      matchedUser.refreshTokenHash = null;
+      await matchedUser.save();
+    }
+
+    //s5 - cookie clear
     res.clearCookie('refreshToken', {
       httpOnly: true,
       secure: true,
-      samesite: 'None',
+      sameSite: 'None',
     });
 
     return res.status(200).json({
